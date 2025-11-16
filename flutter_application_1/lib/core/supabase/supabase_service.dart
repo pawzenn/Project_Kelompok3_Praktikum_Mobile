@@ -3,11 +3,21 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class SupabaseService {
   SupabaseService._();
+
+  /// Singleton instance
   static final SupabaseService instance = SupabaseService._();
 
-  late final SupabaseClient client;
+  /// Client internal
+  late final SupabaseClient _client;
 
-  Future<void> init() async {
+  /// Getter instance-level
+  SupabaseClient get client => _client;
+
+  /// Getter static global (enak dipakai di Repository lain)
+  static SupabaseClient get globalClient => instance._client;
+
+  /// Panggil SEKALI di awal aplikasi (di main.dart)
+  static Future<void> init() async {
     // load .env
     await dotenv.load(fileName: ".env");
 
@@ -22,24 +32,24 @@ class SupabaseService {
 
     await Supabase.initialize(url: url, anonKey: anonKey);
 
-    client = Supabase.instance.client;
+    instance._client = Supabase.instance.client;
   }
 
   // ========== AUTH ==========
 
   Future<AuthResponse> signUp(String email, String password) {
-    return client.auth.signUp(email: email, password: password);
+    return _client.auth.signUp(email: email, password: password);
   }
 
   Future<AuthResponse> signIn(String email, String password) {
-    return client.auth.signInWithPassword(email: email, password: password);
+    return _client.auth.signInWithPassword(email: email, password: password);
   }
 
   Future<void> signOut() async {
-    await client.auth.signOut();
+    await _client.auth.signOut();
   }
 
-  User? get currentUser => client.auth.currentUser;
+  User? get currentUser => _client.auth.currentUser;
 
   // ========== CART ==========
 
@@ -51,7 +61,7 @@ class SupabaseService {
     required String productId,
     required int quantity,
   }) async {
-    await client.from('cart_items').upsert({
+    await _client.from('cart_items').upsert({
       'user_id': userId,
       'product_id': productId,
       'quantity': quantity,
@@ -59,7 +69,7 @@ class SupabaseService {
   }
 
   Future<List<Map<String, dynamic>>> getCartItems(String userId) async {
-    final result = await client
+    final result = await _client
         .from('cart_items')
         .select()
         .eq('user_id', userId);
@@ -71,7 +81,7 @@ class SupabaseService {
     required String userId,
     required String productId,
   }) async {
-    await client
+    await _client
         .from('cart_items')
         .delete()
         .eq('user_id', userId)
@@ -79,7 +89,7 @@ class SupabaseService {
   }
 
   Future<void> clearCart(String userId) async {
-    await client.from('cart_items').delete().eq('user_id', userId);
+    await _client.from('cart_items').delete().eq('user_id', userId);
   }
 
   // ========== ORDER ==========
@@ -91,7 +101,7 @@ class SupabaseService {
     required String userId,
     required double total,
   }) async {
-    final inserted = await client
+    final inserted = await _client
         .from('orders')
         .insert({'user_id': userId, 'total': total})
         .select()
@@ -117,6 +127,6 @@ class SupabaseService {
         )
         .toList();
 
-    await client.from('order_items').insert(payload);
+    await _client.from('order_items').insert(payload);
   }
 }
