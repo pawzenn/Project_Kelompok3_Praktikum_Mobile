@@ -1,6 +1,3 @@
-import '../../core/services/dio_client.dart';
-import '../models/cart_item.dart';
-
 enum ClientType { http, dio }
 
 class RecipeRepository {
