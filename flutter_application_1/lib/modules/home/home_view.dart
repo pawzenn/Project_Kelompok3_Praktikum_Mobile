@@ -5,8 +5,8 @@ import '../../widgets/empty_state.dart';
 import '../../widgets/error_state.dart';
 import '../../widgets/loading_skeleton.dart';
 import 'home_controller.dart';
-import 'widgets/recipe_cart.dart';
-import 'widgets/recipe_detail_sheet.dart';
+import 'widgets/product_card.dart';
+import 'widgets/product_quantity_control.dart';
 
 class HomeView extends StatelessWidget {
   const HomeView({super.key});

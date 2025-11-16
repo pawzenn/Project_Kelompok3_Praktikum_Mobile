@@ -1,11 +1,9 @@
 import 'dart:math'; // untuk hitung std dev
 import 'package:get/get.dart';
 
-import '../../data/models/recipe.dart';
-import '../../data/repositories/recipe_repository.dart';
-import '../../core/services/http_client.dart';
+import '../../data/models/cart_item.dart';
+import '../../data/repositories/cart_repository.dart';
 import '../../core/services/dio_client.dart';
-import '../choice/choice_controller.dart';
 
 class HomeController extends GetxController {
   final RecipeRepository repo = Get.find<RecipeRepository>();

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../data/models/recipe.dart';
+import '../../../data/models/cart_item.dart';
 
 class RecipeDetailSheet extends StatelessWidget {
   final Recipe recipe;
