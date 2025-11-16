@@ -1,9 +1,5 @@
-// lib/core/local/local_prefs_service.dart
-
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Service untuk menyimpan status login & info user secara lokal
-/// menggunakan SharedPreferences.
 class LocalPrefsService {
   static const String _keyIsLoggedIn = 'is_logged_in';
   static const String _keyLastEmail = 'last_email';

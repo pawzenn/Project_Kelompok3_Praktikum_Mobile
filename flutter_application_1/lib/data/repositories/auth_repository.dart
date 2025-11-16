@@ -1,7 +1,5 @@
-// lib/core/data/auth_repository.dart (atau path serupa di dalam core/data)
-
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter_application_1/core/supabase/supabase_service.dart';
+import '../../core/supabase/supabase_service.dart';
 
 /// Repository yang mengurus semua interaksi Auth + tabel `profiles` di Supabase.
 class AuthRepository {
