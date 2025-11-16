@@ -1,4 +1,3 @@
-// lib/modules/home/home_controller.dart
 import 'package:get/get.dart';
 
 import '../../data/models/product.dart';
@@ -17,21 +16,22 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    loadProducts();
+    fetchProducts();
   }
 
-  Future<void> loadProducts() async {
-    isLoading.value = true;
-    errorMessage.value = '';
-
+  Future<void> fetchProducts() async {
     try {
-      final result = await _productRepository.getProducts();
+      isLoading.value = true;
+      errorMessage.value = '';
+
+      final result = await _productRepository.getChickenMenus();
       products.assignAll(result);
     } catch (e) {
-      errorMessage.value =
-          'Gagal memuat katalog. Pastikan pernah online minimal sekali. (${e.toString()})';
+      errorMessage.value = e.toString();
     } finally {
       isLoading.value = false;
     }
   }
+
+  Future<void> refreshProducts() => fetchProducts();
 }

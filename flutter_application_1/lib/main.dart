@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'core/supabase/supabase_service.dart';
+import 'core/theme/app_theme.dart';
 import 'routes/app_pages.dart';
+import 'routes/app_routes.dart';
 
-Future<void> main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inisialisasi Supabase (sekaligus load .env)
-  await SupabaseService.init();
+  // Inisialisasi Supabase dari service singleton
+  await SupabaseService.instance.init();
 
   runApp(const MyApp());
 }
@@ -19,13 +21,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      // Mulai dari halaman login (didefinisikan di AppPages)
-      initialRoute: AppPages.initial,
+      title: 'Lalapan Bang Ajey',
+      theme: AppTheme.lightTheme, // ⬅️ pakai getter dari AppTheme
+      initialRoute: AppRoutes.login,
       getPages: AppPages.routes,
     );
   }
