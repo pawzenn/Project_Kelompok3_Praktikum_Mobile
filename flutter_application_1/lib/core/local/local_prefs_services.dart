@@ -4,12 +4,15 @@ class LocalPrefsService {
   static const String _keyIsLoggedIn = 'is_logged_in';
   static const String _keyLastEmail = 'last_email';
   static const String _keyLastUsername = 'last_username';
+  static const String _keyIsDarkTheme = 'is_dark_theme';
   static const String _keyUserId = 'user_id';
 
   static Future<SharedPreferences> get _prefs async =>
       await SharedPreferences.getInstance();
 
-  /// Simpan status apakah user sedang login
+  // ========= STATUS LOGIN =========
+
+  /// Set flag apakah user sedang login
   static Future<void> setLoggedIn(bool value) async {
     final prefs = await _prefs;
     await prefs.setBool(_keyIsLoggedIn, value);
@@ -21,22 +24,16 @@ class LocalPrefsService {
     return prefs.getBool(_keyIsLoggedIn) ?? false;
   }
 
-  /// Simpan email terakhir yang dipakai login
+  /// Simpan email terakhir
   static Future<void> setLastEmail(String email) async {
     final prefs = await _prefs;
     await prefs.setString(_keyLastEmail, email);
   }
 
-  /// Simpan username terakhir yang dipakai login
+  /// Simpan username terakhir
   static Future<void> setLastUsername(String username) async {
     final prefs = await _prefs;
     await prefs.setString(_keyLastUsername, username);
-  }
-
-  /// Simpan userId (uuid Supabase)
-  static Future<void> setUserId(String userId) async {
-    final prefs = await _prefs;
-    await prefs.setString(_keyUserId, userId);
   }
 
   /// Ambil email terakhir (kalau ada)
@@ -57,8 +54,15 @@ class LocalPrefsService {
     return prefs.getString(_keyUserId);
   }
 
-  /// Helper: simpan seluruh sesi login dalam satu kali panggil
-  /// Dipakai di LoginSupabaseService setelah SignIn / SignUp berhasil
+  // ========= KOMPATIBILITAS DENGAN KODE LOGIN =========
+
+  /// Dipakai di login_supabase.dart
+  ///
+  /// Simpan:
+  /// - status login
+  /// - userId
+  /// - email
+  /// - username
   static Future<void> saveLoginSession({
     required String userId,
     required String email,
@@ -73,12 +77,24 @@ class LocalPrefsService {
 
   /// Dipakai saat logout:
   /// - hapus status login
-  /// - hapus email/username/userId
+  /// - hapus userId, email, username
   static Future<void> clearOnLogout() async {
     final prefs = await _prefs;
     await prefs.remove(_keyIsLoggedIn);
+    await prefs.remove(_keyUserId);
     await prefs.remove(_keyLastEmail);
     await prefs.remove(_keyLastUsername);
-    await prefs.remove(_keyUserId);
+  }
+
+  // ========= TEMA GELAP / TERANG =========
+
+  static Future<void> setDarkTheme(bool value) async {
+    final prefs = await _prefs;
+    await prefs.setBool(_keyIsDarkTheme, value);
+  }
+
+  static Future<bool> isDarkTheme() async {
+    final prefs = await _prefs;
+    return prefs.getBool(_keyIsDarkTheme) ?? false;
   }
 }
