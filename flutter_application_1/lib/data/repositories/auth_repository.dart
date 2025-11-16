@@ -6,7 +6,8 @@ class AuthRepository {
   final SupabaseClient _client;
 
   AuthRepository({SupabaseClient? client})
-    : _client = client ?? SupabaseService.client;
+    // 👇 perbaikan di sini: pakai instance, bukan static
+    : _client = client ?? SupabaseService.instance.client;
 
   /// Registrasi user baru:
   /// - Buat akun di Supabase Auth (email + password)
