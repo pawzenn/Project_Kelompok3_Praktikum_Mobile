@@ -82,14 +82,13 @@ class SupabaseService {
     required String userId,
     required double total,
   }) async {
-    final inserted = await client
+    final result = await client
         .from('orders')
-        .insert({'user_id': userId, 'total': total})
-        .select()
+        .insert({'user_id': userId, 'total_amount': total})
+        .select('id')
         .single();
 
-    final orderId = inserted['id'] as String;
-    return orderId;
+    return result['id'] as String;
   }
 
   Future<void> insertOrderItems({

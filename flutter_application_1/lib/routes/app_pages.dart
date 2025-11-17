@@ -16,21 +16,18 @@ class AppPages {
   static final routes = <GetPage>[
     GetPage(name: AppRoutes.login, page: () => const SignInPage()),
     GetPage(name: AppRoutes.register, page: () => const SignUpPage()),
+
     GetPage(
       name: AppRoutes.home,
       page: () => HomeView(),
       binding: BindingsBuilder(() {
         Get.put(HomeController());
-        Get.put(CartController(), permanent: true);
+        Get.put(CartController(), permanent: true); // ✅ cukup di sini
       }),
     ),
-    GetPage(
-      name: AppRoutes.cart,
-      page: () => const CartView(),
-      binding: BindingsBuilder(() {
-        Get.put(CartController(), permanent: true);
-      }),
-    ),
+
+    GetPage(name: AppRoutes.cart, page: () => const CartView()),
+
     GetPage(
       name: AppRoutes.profile,
       page: () => const ProfileView(),
