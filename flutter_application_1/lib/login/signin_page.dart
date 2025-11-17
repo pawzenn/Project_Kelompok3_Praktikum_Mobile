@@ -86,12 +86,12 @@ class _SignInPageState extends State<SignInPage> {
               TextFormField(
                 controller: _identifierC,
                 decoration: const InputDecoration(
-                  labelText: 'Email atau Username',
+                  labelText: 'Email',
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Email atau username wajib diisi';
+                    return 'Email wajib diisi';
                   }
                   return null;
                 },
