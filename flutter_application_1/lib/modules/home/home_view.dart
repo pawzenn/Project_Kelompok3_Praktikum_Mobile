@@ -15,6 +15,10 @@ class HomeView extends GetView<HomeController> {
 
   @override
   Widget build(BuildContext context) {
+    // MediaQuery: dipakai untuk orientasi dan ukuran layar
+    final media = MediaQuery.of(context);
+    final orientation = media.orientation;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Lalapan Bang Ajey'),
@@ -43,34 +47,29 @@ class HomeView extends GetView<HomeController> {
                   Positioned(
                     right: 6,
                     top: 6,
-                    child: IgnorePointer(
-                      // <--- tambahkan ini
-                      ignoring: true, // badge tidak menghalangi klik
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 18,
+                        minHeight: 18,
+                      ),
+                      child: Text(
+                        '$count',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
                         ),
-                        constraints: const BoxConstraints(
-                          minWidth: 18,
-                          minHeight: 18,
-                        ),
-                        child: Text(
-                          '$count',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
+                        textAlign: TextAlign.center,
                       ),
                     ),
                   ),
               ],
             );
           }),
-
           IconButton(
             icon: const Icon(Icons.person),
             onPressed: () => Get.toNamed(AppRoutes.profile),
@@ -100,34 +99,59 @@ class HomeView extends GetView<HomeController> {
 
         final products = controller.products;
 
+        // LayoutBuilder: responsif berdasarkan lebar area konten
         return LayoutBuilder(
           builder: (context, constraints) {
             final width = constraints.maxWidth;
+
+            // Tentukan jumlah kolom berdasarkan lebar layar
             int crossAxisCount;
             if (width < 600) {
+              // HP
               crossAxisCount = 2;
             } else if (width < 900) {
+              // tablet kecil / hp landscape
               crossAxisCount = 3;
             } else {
+              // tablet gede / layar lebar
               crossAxisCount = 4;
             }
 
-            return GridView.builder(
-              padding: const EdgeInsets.all(12),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: crossAxisCount,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 0.75,
+            // ChildAspectRatio disesuaikan sedikit supaya di tablet
+            // kartu tidak terlalu tinggi / terlalu gepeng
+            double childAspectRatio;
+            if (orientation == Orientation.portrait) {
+              childAspectRatio = width < 600 ? 0.75 : 0.80;
+            } else {
+              // landscape cenderung lebih lebar
+              childAspectRatio = width < 900 ? 1.0 : 1.1;
+            }
+
+            return Align(
+              // Biar di tablet lebar, grid tidak melebar full sampai ujung
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: 1000, // batas max lebar grid di tablet/web
+                ),
+                child: GridView.builder(
+                  padding: const EdgeInsets.all(12),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: childAspectRatio,
+                  ),
+                  itemCount: products.length,
+                  itemBuilder: (context, index) {
+                    final p = products[index];
+                    return _ProductCard(
+                      product: p,
+                      onAdd: () => _cartController.addProduct(p),
+                    );
+                  },
+                ),
               ),
-              itemCount: products.length,
-              itemBuilder: (context, index) {
-                final p = products[index];
-                return _ProductCard(
-                  product: p,
-                  onAdd: () => _cartController.addProduct(p),
-                );
-              },
             );
           },
         );
@@ -146,51 +170,55 @@ class _ProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onAdd,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: product.imageUrl != null
-                  ? Image.network(product.imageUrl!, fit: BoxFit.cover)
-                  : const Icon(Icons.fastfood, size: 48),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 2,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // gambar mengisi ruang atas card secara fleksibel
+          Expanded(
+            child: product.imageUrl != null
+                ? Image.network(
+                    product.imageUrl!,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                  )
+                : const Icon(Icons.fastfood, size: 48),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            child: Text(
+              product.name,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              child: Text(
-                product.name,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            child: Text(
+              product.category ?? '',
+              style: const TextStyle(fontSize: 12),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              child: Text(
-                product.category ?? '',
-                style: const TextStyle(fontSize: 12),
-              ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Rp ${product.price.toStringAsFixed(0)}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add_shopping_cart),
+                  onPressed: onAdd,
+                  tooltip: 'Tambah ke keranjang',
+                ),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Rp ${product.price.toStringAsFixed(0)}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.add_shopping_cart),
-                    onPressed: onAdd,
-                    tooltip: 'Tambah ke keranjang',
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
