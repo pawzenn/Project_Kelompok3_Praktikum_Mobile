@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'core/local/hive_service.dart';
 import 'core/local/local_prefs_services.dart';
@@ -9,31 +11,32 @@ import 'core/theme/theme_controller.dart';
 import 'modules/cart/cart_controller.dart';
 import 'routes/app_pages.dart';
 import 'routes/app_routes.dart';
+import 'debug_storage_benchmark.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Init Supabase + Hive
+  await dotenv.load(fileName: '.env');
+
   await SupabaseService.instance.init();
   await HiveService.init();
 
-  // Cek apakah sudah ada sesi login lokal
   final bool isLoggedIn = await LocalPrefsService.isLoggedIn();
 
-  // Controller global
   Get.put(ThemeController());
   Get.put(CartController());
 
   runApp(MyApp(initialRoute: isLoggedIn ? AppRoutes.home : AppRoutes.login));
+
+  if (kDebugMode) {
+    runStorageBenchmark();
+  }
 }
 
 class MyApp extends StatelessWidget {
   final String initialRoute;
 
-  const MyApp({
-    super.key,
-    this.initialRoute = AppRoutes.home, // default ke home
-  });
+  const MyApp({super.key, this.initialRoute = AppRoutes.home});
 
   @override
   Widget build(BuildContext context) {
