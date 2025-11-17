@@ -1,4 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+
 import 'package:flutter_application_1/data/providers/cart_remote_provider.dart';
 
 /// Dipakai untuk mewakili kondisi offline
@@ -7,18 +8,26 @@ class OfflineException implements Exception {
   OfflineException([this.message = 'Fitur ini memerlukan koneksi internet']);
 }
 
+/// Repository untuk semua operasi keranjang yang terhubung ke Supabase.
+///
+/// - Semua operasi DIWAJIBKAN online (sesuai ketentuan tugasmu:
+///   add / remove / clear / lihat keranjang & checkout harus pakai jaringan).
+/// - Lapisan ini memanggil CartRemoteProvider yang langsung ke Supabase.
 class CartRepository {
   final CartRemoteProvider cartRemoteProvider;
 
   CartRepository({required this.cartRemoteProvider});
 
+  /// Cek koneksi internet.
   Future<bool> _isOnline() async {
     final result = await Connectivity().checkConnectivity();
     return result != ConnectivityResult.none;
   }
 
-  /// Tambah / update item di keranjang (upsert)
-  /// - Hanya boleh saat online (sesuai ketentuan kamu: add/checkout wajib online)
+  /// Tambah / update item di keranjang (upsert).
+  ///
+  /// - Hanya boleh saat online.
+  /// - Jika offline → lempar [OfflineException].
   Future<void> upsertCartItem({
     required String userId,
     required String productId,
@@ -35,8 +44,14 @@ class CartRepository {
     );
   }
 
-  /// Ambil isi keranjang user dari Supabase
-  Future<List<Map<String, dynamic>>> getCart(String userId) async {
+  /// Ambil isi keranjang user dari Supabase.
+  ///
+  /// Dipakai oleh CartController._loadCartFromServer() untuk sync antar perangkat.
+  /// - Hanya boleh saat online.
+  /// - Jika offline → lempar [OfflineException].
+  Future<List<Map<String, dynamic>>> getCartItems({
+    required String userId,
+  }) async {
     if (!await _isOnline()) {
       throw OfflineException('Melihat keranjang hanya bisa saat online');
     }
@@ -44,7 +59,16 @@ class CartRepository {
     return await cartRemoteProvider.getCartItems(userId);
   }
 
-  /// Hapus 1 item dari keranjang
+  /// (Opsional) Alias lama kalau di tempat lain masih memanggil `getCart`.
+  /// Boleh dibiarkan, nanti tinggal panggil `getCartItems`.
+  Future<List<Map<String, dynamic>>> getCart(String userId) {
+    return getCartItems(userId: userId);
+  }
+
+  /// Hapus 1 item dari keranjang.
+  ///
+  /// - Hanya boleh saat online.
+  /// - Jika offline → lempar [OfflineException].
   Future<void> removeFromCart({
     required String userId,
     required String productId,
@@ -59,7 +83,10 @@ class CartRepository {
     );
   }
 
-  /// Kosongkan keranjang user
+  /// Kosongkan seluruh keranjang user.
+  ///
+  /// - Dipakai setelah checkout berhasil.
+  /// - Hanya boleh saat online.
   Future<void> clearCart(String userId) async {
     if (!await _isOnline()) {
       throw OfflineException('Kosongkan keranjang hanya bisa saat online');
