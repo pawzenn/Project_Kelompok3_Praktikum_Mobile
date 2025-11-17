@@ -24,6 +24,10 @@ class HomeView extends GetView<HomeController> {
         title: const Text('Lalapan Bang Ajey'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.note),
+            onPressed: () => Get.toNamed(AppRoutes.notes),
+          ),
+          IconButton(
             onPressed: () => controller.refreshProducts(),
             icon: const Icon(Icons.refresh),
           ),
@@ -73,10 +77,6 @@ class HomeView extends GetView<HomeController> {
           IconButton(
             icon: const Icon(Icons.person),
             onPressed: () => Get.toNamed(AppRoutes.profile),
-          ),
-          IconButton(
-            icon: const Icon(Icons.note),
-            onPressed: () => Get.toNamed(AppRoutes.notes),
           ),
         ],
       ),
