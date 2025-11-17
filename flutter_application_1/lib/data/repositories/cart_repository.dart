@@ -8,11 +8,6 @@ class OfflineException implements Exception {
   OfflineException([this.message = 'Fitur ini memerlukan koneksi internet']);
 }
 
-/// Repository untuk semua operasi keranjang yang terhubung ke Supabase.
-///
-/// - Semua operasi DIWAJIBKAN online (sesuai ketentuan tugasmu:
-///   add / remove / clear / lihat keranjang & checkout harus pakai jaringan).
-/// - Lapisan ini memanggil CartRemoteProvider yang langsung ke Supabase.
 class CartRepository {
   final CartRemoteProvider cartRemoteProvider;
 

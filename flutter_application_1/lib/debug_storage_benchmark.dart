@@ -33,14 +33,12 @@ Future<String> _runHiveBenchmark() async {
 
   const int itemCount = 1000;
 
-  // Tulis 1000 item
   final writeWatch = Stopwatch()..start();
   for (int i = 0; i < itemCount; i++) {
     await box.put('key_$i', 'value_$i');
   }
   writeWatch.stop();
 
-  // Baca 1000 item
   final readWatch = Stopwatch()..start();
   for (int i = 0; i < itemCount; i++) {
     final _ = box.get('key_$i');
