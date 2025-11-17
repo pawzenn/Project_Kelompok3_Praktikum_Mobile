@@ -1,247 +1,167 @@
 import 'package:get/get.dart';
-
 import '../../core/supabase/supabase_service.dart';
+import '../../data/models/cart_line.dart';
 import '../../data/models/product.dart';
-import '../../data/providers/cart_remote_provider.dart';
-import '../../data/providers/order_remote_provider.dart';
-import '../../data/repositories/cart_repository.dart';
-import '../../data/repositories/order_repository.dart';
-import '../home/home_controller.dart';
-
-class CartItemLine {
-  final Product product;
-  int quantity;
-
-  CartItemLine({required this.product, this.quantity = 1});
-}
 
 class CartController extends GetxController {
-  /// Daftar item di keranjang (produk + quantity)
-  final items = <CartItemLine>[].obs;
+  final supabase = SupabaseService.instance;
 
-  /// Untuk indikasi loading saat sync dari server (opsional dipakai di UI)
-  final isLoading = false.obs;
+  // ==========================
+  // CART ITEMS
+  // ==========================
+  var items = <CartLine>[].obs;
 
-  late final CartRepository _cartRepository;
-  late final OrderRepository _orderRepository;
-
-  int get totalQuantity => items.fold(0, (sum, item) => sum + item.quantity);
-
-  double get totalPrice =>
-      items.fold(0, (sum, item) => sum + item.product.price * item.quantity);
+  // ==========================
+  // ORDER HISTORY
+  // ==========================
+  var orderHistory = <Map<String, dynamic>>[].obs;
+  var isLoadingHistory = false.obs;
+  var historyError = ''.obs;
 
   @override
   void onInit() {
     super.onInit();
-
-    final supabaseService = SupabaseService.instance;
-
-    _cartRepository = CartRepository(
-      cartRemoteProvider: CartRemoteProvider(supabaseService: supabaseService),
-    );
-
-    _orderRepository = OrderRepository(
-      orderRemoteProvider: OrderRemoteProvider(
-        supabaseService: supabaseService,
-      ),
-      cartRepository: _cartRepository,
-    );
-
-    // Saat controller pertama kali dibuat, langsung sync keranjang
-    // dari Supabase (supaya device B bisa melihat isi keranjang device A).
-    _loadCartFromServer();
+    loadCartFromSupabase();
   }
 
-  /// Ambil keranjang dari Supabase untuk currentUser,
-  /// lalu mapping ke CartItemLine dengan mencocokkan product_id ke Product.
-  Future<void> _loadCartFromServer() async {
-    final user = SupabaseService.instance.currentUser;
-    if (user == null) {
-      items.clear();
-      return;
-    }
+  // ======================================================
+  // LOAD CART DARI SUPABASE (JOIN KE TABLE PRODUCTS)
+  // ======================================================
+  Future<void> loadCartFromSupabase() async {
+    final user = supabase.currentUser;
+    if (user == null) return;
 
+    final data = await supabase.client
+        .from('cart_items')
+        .select('product_id, quantity, products(*)')
+        .eq('user_id', user.id);
+
+    items.value = data.map<CartLine>((row) {
+      final p = row['products'];
+
+      final product = Product(
+        id: p['id'],
+        name: p['name'],
+        price: (p['price'] as num).toDouble(),
+        imageUrl: p['image_url'],
+        category: p['category'],
+        description: p['description'],
+      );
+
+      return CartLine(product: product, quantity: row['quantity']);
+    }).toList();
+  }
+
+  // ======================================================
+  // LOAD ORDER HISTORY DARI SUPABASE
+  // ======================================================
+  Future<void> loadOrderHistory() async {
     try {
-      isLoading.value = true;
+      isLoadingHistory.value = true;
+      historyError.value = '';
 
-      // 1) Ambil row cart_items dari repository (harus ada method ini di CartRepository)
-      final remoteRows = await _cartRepository.getCartItems(userId: user.id);
-      // remoteRows diasumsikan List<Map<String, dynamic>> dengan field
-      // 'product_id' (String) dan 'quantity' (int).
+      final user = supabase.currentUser;
+      if (user == null) return;
 
-      // 2) Ambil daftar produk yang sudah dimuat HomeController
-      final home = Get.find<HomeController>();
-      final allProducts = home.products; // RxList<Product> atau List<Product>
+      final data = await supabase.getOrders(user.id);
 
-      final loaded = <CartItemLine>[];
-
-      for (final row in remoteRows) {
-        final String productId = row['product_id'] as String;
-        final int qty = row['quantity'] as int;
-
-        // Cari Product yang id-nya sama
-        final product = allProducts.firstWhereOrNull((p) => p.id == productId);
-
-        if (product != null && qty > 0) {
-          loaded.add(CartItemLine(product: product, quantity: qty));
-        }
-      }
-
-      items.assignAll(loaded);
-    } on OfflineException catch (_) {
-      // Kalau offline, biarkan saja items apa adanya (misal kosong).
-      // Bisa juga kasih snackbar kalau mau.
+      orderHistory.value = data;
     } catch (e) {
-      // Bisa log / snackbar untuk debug, tapi jangan bikin app crash.
-      Get.snackbar('Error', 'Gagal memuat keranjang: $e');
+      historyError.value = 'Gagal memuat riwayat.';
     } finally {
-      isLoading.value = false;
+      isLoadingHistory.value = false;
     }
   }
 
-  /// Dipanggil dari UI kalau user tap "refresh" di halaman keranjang (opsional)
-  Future<void> refreshFromServer() async {
-    await _loadCartFromServer();
-  }
-
+  // ======================================================
+  // ADD PRODUCT (LOCAL + SUPABASE)
+  // ======================================================
   Future<void> addProduct(Product product) async {
-    final user = SupabaseService.instance.currentUser;
-    if (user == null) {
-      Get.snackbar('Error', 'User tidak ditemukan, silakan login ulang.');
-      return;
-    }
+    final user = supabase.currentUser;
+    if (user == null) return;
 
-    // Hitung quantity baru
-    CartItemLine? line = items.firstWhereOrNull(
-      (e) => e.product.id == product.id,
-    );
-    final int newQty = (line?.quantity ?? 0) + 1;
+    final index = items.indexWhere((e) => e.product.id == product.id);
 
-    try {
-      // 1) Simpan ke Supabase (cek online di dalam repository)
-      await _cartRepository.upsertCartItem(
+    if (index == -1) {
+      items.add(CartLine(product: product, quantity: 1));
+      await supabase.upsertCartItem(
         userId: user.id,
         productId: product.id,
-        quantity: newQty,
+        quantity: 1,
       );
-
-      // 2) Kalau berhasil → update state lokal
-      if (line != null) {
-        line.quantity = newQty;
-        items.refresh();
-      } else {
-        items.add(CartItemLine(product: product, quantity: 1));
-      }
-    } on OfflineException catch (e) {
-      Get.snackbar('Koneksi', e.message);
-    } catch (e) {
-      Get.snackbar('Error', 'Gagal menambah ke keranjang: $e');
-    }
-  }
-
-  Future<void> increment(CartItemLine line) async {
-    final user = SupabaseService.instance.currentUser;
-    if (user == null) {
-      Get.snackbar('Error', 'User tidak ditemukan, silakan login ulang.');
-      return;
-    }
-
-    final newQty = line.quantity + 1;
-
-    try {
-      await _cartRepository.upsertCartItem(
+    } else {
+      items[index].quantity++;
+      await supabase.upsertCartItem(
         userId: user.id,
-        productId: line.product.id,
-        quantity: newQty,
+        productId: product.id,
+        quantity: items[index].quantity,
       );
-      line.quantity = newQty;
-      items.refresh();
-    } on OfflineException catch (e) {
-      Get.snackbar('Koneksi', e.message);
-    } catch (e) {
-      Get.snackbar('Error', 'Gagal mengubah jumlah: $e');
     }
+
+    items.refresh();
   }
 
-  Future<void> decrement(CartItemLine line) async {
-    final user = SupabaseService.instance.currentUser;
-    if (user == null) {
-      Get.snackbar('Error', 'User tidak ditemukan, silakan login ulang.');
-      return;
+  // ======================================================
+  // REMOVE ONE
+  // ======================================================
+  Future<void> removeOne(Product product) async {
+    final user = supabase.currentUser;
+    if (user == null) return;
+
+    final index = items.indexWhere((e) => e.product.id == product.id);
+
+    if (index == -1) return;
+
+    if (items[index].quantity > 1) {
+      items[index].quantity--;
+      await supabase.upsertCartItem(
+        userId: user.id,
+        productId: product.id,
+        quantity: items[index].quantity,
+      );
+    } else {
+      items.removeAt(index);
+      await supabase.deleteCartItem(userId: user.id, productId: product.id);
     }
 
-    final newQty = line.quantity - 1;
-
-    try {
-      if (newQty > 0) {
-        await _cartRepository.upsertCartItem(
-          userId: user.id,
-          productId: line.product.id,
-          quantity: newQty,
-        );
-        line.quantity = newQty;
-        items.refresh();
-      } else {
-        await _cartRepository.removeFromCart(
-          userId: user.id,
-          productId: line.product.id,
-        );
-        items.remove(line);
-      }
-    } on OfflineException catch (e) {
-      Get.snackbar('Koneksi', e.message);
-    } catch (e) {
-      Get.snackbar('Error', 'Gagal mengubah jumlah: $e');
-    }
+    items.refresh();
   }
 
-  Future<void> clearCart() async {
-    final user = SupabaseService.instance.currentUser;
-    if (user == null) {
-      items.clear();
-      return;
-    }
+  // ======================================================
+  // TOTAL
+  // ======================================================
+  int get totalQuantity => items.fold(0, (sum, item) => sum + item.quantity);
 
-    try {
-      await _cartRepository.clearCart(user.id);
-      items.clear();
-    } on OfflineException catch (e) {
-      Get.snackbar('Koneksi', e.message);
-    } catch (e) {
-      Get.snackbar('Error', 'Gagal mengosongkan keranjang: $e');
-    }
-  }
+  double get cartTotal =>
+      items.fold(0, (sum, item) => sum + (item.product.price * item.quantity));
 
+  // ======================================================
+  // CHECKOUT
+  // ======================================================
   Future<void> checkout() async {
+    final user = supabase.currentUser;
+    if (user == null) return;
+
     if (items.isEmpty) return;
 
-    final user = SupabaseService.instance.currentUser;
-    if (user == null) {
-      Get.snackbar('Error', 'User tidak ditemukan, silakan login ulang.');
-      return;
-    }
+    final orderId = await supabase.createOrder(
+      userId: user.id,
+      total: cartTotal,
+    );
 
-    final payload = items
-        .map(
-          (e) => {
-            'product_id': e.product.id,
-            'quantity': e.quantity,
-            'price': e.product.price,
-          },
-        )
-        .toList();
+    await supabase.insertOrderItems(
+      orderId: orderId,
+      items: items.map((e) {
+        return {
+          'product_id': e.product.id,
+          'quantity': e.quantity,
+          'price': e.product.price,
+        };
+      }).toList(),
+    );
 
-    try {
-      await _orderRepository.checkout(userId: user.id, items: payload);
+    await supabase.clearCart(user.id);
 
-      // OrderRepository akan memanggil cartRepository.clearCart(userId)
-      items.clear();
-
-      Get.snackbar('Sukses', 'Pesanan berhasil dibuat.');
-    } on OfflineException catch (e) {
-      Get.snackbar('Koneksi', e.message);
-    } catch (e) {
-      Get.snackbar('Error', 'Gagal checkout: $e');
-    }
+    items.clear();
   }
 }

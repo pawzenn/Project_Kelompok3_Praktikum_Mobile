@@ -4,7 +4,7 @@ class AppRoutes {
   static const home = '/home';
   static const String login = '/login';
   static const String register = '/register';
-  static const notes = '/notes';
+
   static const String profile = '/profile'; // NEW
   static const String cart = '/cart'; // NEW
 }
