@@ -9,9 +9,6 @@ class LoginSupabaseService {
 
   static final AuthRepository _authRepository = AuthRepository();
 
-  /// Registrasi user baru:
-  /// - pakai AuthRepository.registerUser (Auth + tabel profiles)
-  /// - simpan sesi login ke SharedPreferences via LocalPrefsService
   static Future<void> signUp({
     required String email,
     required String username,
@@ -36,10 +33,6 @@ class LoginSupabaseService {
     );
   }
 
-  /// Login dengan identifier (boleh email ATAU username) + password.
-  /// Setelah berhasil:
-  /// - ambil profil dari tabel profiles
-  /// - simpan sesi login ke SharedPreferences
   static Future<void> signIn({
     required String identifier,
     required String password,
