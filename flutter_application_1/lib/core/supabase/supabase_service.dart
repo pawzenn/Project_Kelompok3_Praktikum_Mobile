@@ -91,6 +91,16 @@ class SupabaseService {
     return result['id'] as String;
   }
 
+  Future<List<Map<String, dynamic>>> getOrders(String userId) async {
+    final result = await client
+        .from('orders')
+        .select()
+        .eq('user_id', userId)
+        .order('created_at', ascending: false);
+
+    return List<Map<String, dynamic>>.from(result);
+  }
+
   Future<void> insertOrderItems({
     required String orderId,
     required List<Map<String, dynamic>> items,
