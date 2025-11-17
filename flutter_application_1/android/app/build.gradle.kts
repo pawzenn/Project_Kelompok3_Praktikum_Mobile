@@ -6,13 +6,15 @@ plugins {
 }
 
 android {
-    namespace = "com.example.flutter_application_1"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    namespace "com.example.flutter_application_1"
+    compileSdk 34  // <- PENTING, kalau sebelumnya 30 atau di bawahnya
 
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+    defaultConfig {
+        applicationId "com.example.flutter_application_1"
+        minSdk 21
+        targetSdk 34   // <- naikkan juga
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
     }
 
     kotlinOptions {
