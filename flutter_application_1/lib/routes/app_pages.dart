@@ -8,6 +8,7 @@ import '../modules/cart/cart_view.dart';
 import '../modules/cart/cart_controller.dart';
 import '../modules/profile/profile_view.dart';
 import '../modules/profile/profile_controller.dart';
+import '../modules/notes/notes_page.dart'; // <--- TAMBAH INI
 import 'app_routes.dart';
 
 class AppPages {
@@ -35,5 +36,6 @@ class AppPages {
         Get.put(ProfileController());
       }),
     ),
+    GetPage(name: AppRoutes.notes, page: () => const NotesPage()),
   ];
 }

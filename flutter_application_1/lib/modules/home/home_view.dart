@@ -74,6 +74,10 @@ class HomeView extends GetView<HomeController> {
             icon: const Icon(Icons.person),
             onPressed: () => Get.toNamed(AppRoutes.profile),
           ),
+          IconButton(
+            icon: const Icon(Icons.note),
+            onPressed: () => Get.toNamed(AppRoutes.notes),
+          ),
         ],
       ),
       body: Obx(() {
