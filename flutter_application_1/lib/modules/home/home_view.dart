@@ -65,6 +65,14 @@ class HomeView extends GetView<HomeController> {
             );
           }),
 
+          // 🔹 TOMBOL BARU: menu fitur lokasi (Modul 5)
+          IconButton(
+            icon: const Icon(Icons.location_on_outlined),
+            tooltip: 'Fitur Lokasi',
+            onPressed: () => Get.toNamed(AppRoutes.locationMenu),
+          ),
+
+          // profil
           IconButton(
             icon: const Icon(Icons.person),
             onPressed: () => Get.toNamed(AppRoutes.profile),
