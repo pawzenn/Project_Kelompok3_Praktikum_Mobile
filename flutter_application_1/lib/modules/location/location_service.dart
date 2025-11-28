@@ -8,17 +8,16 @@ class LocationService {
   /// Pastikan permission lokasi diizinkan.
   /// return: true jika granted, false jika ditolak.
   Future<bool> ensurePermission() async {
-    // Cek status awal
-    final status = await Permission.location.status;
+    // cek permission while-in-use
+    final status = await Permission.locationWhenInUse.status;
 
     if (status.isGranted) return true;
 
     if (status.isDenied) {
-      final result = await Permission.location.request();
+      final result = await Permission.locationWhenInUse.request();
       return result.isGranted;
     }
 
-    // Kalau permanentlyDenied → minta user buka settings
     if (status.isPermanentlyDenied) {
       await openAppSettings();
       return false;

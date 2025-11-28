@@ -34,13 +34,15 @@ class LocationLiveView extends GetView<LocationLiveController> {
                   mapController: controller.mapController,
                   options: MapOptions(
                     initialCenter: latLng ?? const LatLng(0, 0),
-                    initialZoom: 2,
+                    initialZoom: latLng == null ? 2 : 16,
                   ),
+
                   children: [
                     TileLayer(
                       urlTemplate:
-                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'com.example.app',
+                          'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
+                      subdomains: const ['a', 'b', 'c', 'd'],
+                      userAgentPackageName: 'com.PelacakLokasi.app',
                     ),
                     if (latLng != null)
                       MarkerLayer(

@@ -26,8 +26,9 @@ class LocationNetworkView extends GetView<LocationNetworkController> {
                 children: [
                   TileLayer(
                     urlTemplate:
-                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.example.flutter_application_1',
+                        'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
+                    subdomains: const ['a', 'b', 'c', 'd'],
+                    userAgentPackageName: 'com.aplikasilokasi.tracker',
                   ),
                   Obx(() {
                     final pos = controller.currentLatLng.value;
