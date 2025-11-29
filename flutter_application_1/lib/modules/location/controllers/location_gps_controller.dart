@@ -16,6 +16,12 @@ class LocationGpsController extends GetxController {
   final accuracy = 0.0.obs;
   final lastUpdate = Rx<DateTime?>(null);
 
+  final altitude = 0.0.obs;
+  final speed = 0.0.obs;
+
+  final mapCenter = LatLng(-6.200000, 106.816667).obs;
+  final mapZoom = 14.0.obs;
+
   String get formattedTime {
     final t = lastUpdate.value;
     if (t == null) return '-';

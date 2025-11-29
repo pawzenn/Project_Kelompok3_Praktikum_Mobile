@@ -40,9 +40,13 @@ class LocationLiveView extends GetView<LocationLiveController> {
                   children: [
                     TileLayer(
                       urlTemplate:
-                          'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
-                      subdomains: const ['a', 'b', 'c', 'd'],
-                      userAgentPackageName: 'com.PelacakLokasi.app',
+                          'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+                      subdomains: const ['a', 'b', 'c'],
+                      // PENTING: Tambahkan subdomains
+                      userAgentPackageName: 'com.mobile.modul5',
+                      maxZoom: 20.0, // Max zoom OpenTopoMap hanya sampai 17
+                      retinaMode:
+                          MediaQuery.of(Get.context!).devicePixelRatio > 1.0,
                     ),
                     if (latLng != null)
                       MarkerLayer(

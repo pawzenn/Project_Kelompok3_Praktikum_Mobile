@@ -25,8 +25,13 @@ class LocationGpsView extends GetView<LocationGpsController> {
                 children: [
                   TileLayer(
                     urlTemplate:
-                        'https://tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.example.flutter_application_1',
+                        'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+                    subdomains: const ['a', 'b', 'c'],
+                    // PENTING: Tambahkan subdomains
+                    userAgentPackageName: 'com.mobile.modul5',
+                    maxZoom: 20.0, // Max zoom OpenTopoMap hanya sampai 17
+                    retinaMode:
+                        MediaQuery.of(Get.context!).devicePixelRatio > 1.0,
                   ),
 
                   Obx(() {
