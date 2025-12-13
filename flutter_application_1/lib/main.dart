@@ -2,7 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'core/local/hive_service.dart';
 import 'core/local/local_prefs_services.dart';
 import 'core/supabase/supabase_service.dart';
@@ -21,6 +22,9 @@ void main() async {
   await SupabaseService.instance.init();
   await HiveService.init();
 
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  debugPrint('✅ Firebase initialized: ${Firebase.app().options.projectId}');
+
   final bool isLoggedIn = await LocalPrefsService.isLoggedIn();
 
   Get.put(ThemeController());
@@ -29,7 +33,7 @@ void main() async {
   runApp(MyApp(initialRoute: isLoggedIn ? AppRoutes.home : AppRoutes.login));
 
   if (kDebugMode) {
-    runStorageBenchmark();
+    Future.microtask(runStorageBenchmark);
   }
 }
 
