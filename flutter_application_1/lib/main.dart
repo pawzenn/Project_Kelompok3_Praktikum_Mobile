@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/core/notifications/local_notification_service.dart';
 import 'package:get/get.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -13,16 +14,24 @@ import 'modules/cart/cart_controller.dart';
 import 'routes/app_pages.dart';
 import 'routes/app_routes.dart';
 import 'debug_storage_benchmark.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'core/notifications/fcm_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  FirebaseMessaging.onBackgroundMessage(FcmService.backgroundHandler);
+
+  await LocalNotificationService.init();
+  await FcmService().init();
 
   await dotenv.load(fileName: '.env');
 
   await SupabaseService.instance.init();
   await HiveService.init();
 
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   debugPrint('✅ Firebase initialized: ${Firebase.app().options.projectId}');
 
   final bool isLoggedIn = await LocalPrefsService.isLoggedIn();
