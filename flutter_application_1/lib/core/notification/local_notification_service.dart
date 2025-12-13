@@ -22,7 +22,7 @@ class LocalNotificationService {
       channelDescription: 'Promo & Status Pesanan',
       importance: Importance.max,
       priority: Priority.high,
-      sound: RawResourceAndroidNotificationSound('notif_lalapan'),
+      sound: RawResourceAndroidNotificationSound('bang_aje'),
     );
 
     const notifDetails = NotificationDetails(android: androidDetails);
