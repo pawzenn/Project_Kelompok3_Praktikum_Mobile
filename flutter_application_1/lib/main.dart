@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/core/notification/fcm_service.dart';
+import 'package:flutter_application_1/core/notification/local_notification_service.dart';
 import 'package:get/get.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -15,6 +17,9 @@ import 'debug_storage_benchmark.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await LocalNotificationService.init();
+  await FCMService.init();
 
   await dotenv.load(fileName: '.env');
 
