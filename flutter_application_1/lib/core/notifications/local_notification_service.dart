@@ -24,7 +24,7 @@ class LocalNotificationService {
       priority: Priority.high,
       playSound: playSound,
       sound: playSound
-          ? const RawResourceAndroidNotificationSound('bang_aje')
+          ? const RawResourceAndroidNotificationSound('bang_ajeyy')
           : null,
     );
 
