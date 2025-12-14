@@ -7,7 +7,7 @@ class NotificationRepository {
   static final NotificationRepository instance = NotificationRepository._();
 
   /// Referensi ke node "notifications"
-  final DatabaseReference _ref = FirebaseDatabase.instance.ref('notifications');
+  final DatabaseReference _ref = FirebaseDatabase.instance.ref('Notification');
 
   /// Simpan 1 log notifikasi ke Realtime Database
   Future<void> logNotification({
