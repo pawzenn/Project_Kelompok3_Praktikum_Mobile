@@ -22,6 +22,10 @@ import '../modules/location/bindings/location_binding.dart';
 import '../modules/location/bindings/network_location_binding.dart';
 import '../modules/location/bindings/gps_location_binding.dart';
 
+import '../modules/location/views/notification_menu_view.dart';
+import '../modules/location/views/notification_history_view.dart';
+import '../modules/location/views/notification_test_view.dart';
+
 import 'app_routes.dart';
 
 class AppPages {
@@ -78,6 +82,21 @@ class AppPages {
       name: AppRoutes.locationGps,
       page: () => const LocationGpsView(),
       binding: GpsLocationBinding(), // Get.put(LocationGpsController())
+    ),
+
+    GetPage(
+      name: AppRoutes.notificationMenu,
+      page: () => NotificationMenuView(),
+    ),
+
+    GetPage(
+      name: AppRoutes.notificationHistory,
+      page: () => NotificationHistoryView(),
+    ),
+
+    GetPage(
+      name: AppRoutes.notificationTest,
+      page: () => NotificationTestView(),
     ),
   ];
 }

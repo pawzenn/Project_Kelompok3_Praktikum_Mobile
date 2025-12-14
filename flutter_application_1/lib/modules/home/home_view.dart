@@ -72,6 +72,13 @@ class HomeView extends GetView<HomeController> {
             onPressed: () => Get.toNamed(AppRoutes.locationMenu),
           ),
 
+          // 🔔 NOTIFIKASI
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            tooltip: 'Notifikasi',
+            onPressed: () => Get.toNamed(AppRoutes.notificationMenu),
+          ),
+
           // profil
           IconButton(
             icon: const Icon(Icons.person),

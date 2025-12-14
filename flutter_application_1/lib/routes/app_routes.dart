@@ -11,4 +11,7 @@ class AppRoutes {
   static const locationLive = '/location/live';
   static const locationNetwork = '/location/network';
   static const locationGps = '/location/gps';
+  static const notificationMenu = '/notification';
+  static const notificationHistory = '/notification-history';
+  static const notificationTest = '/notification-test';
 }

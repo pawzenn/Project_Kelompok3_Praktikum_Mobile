@@ -39,7 +39,7 @@ void main() async {
   Get.put(ThemeController());
   Get.put(CartController());
 
-  runApp(MyApp(initialRoute: isLoggedIn ? AppRoutes.home : AppRoutes.login));
+  runApp(MyApp(initialRoute: AppRoutes.login));
 
   if (kDebugMode) {
     Future.microtask(runStorageBenchmark);

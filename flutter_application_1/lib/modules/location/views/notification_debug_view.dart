@@ -20,12 +20,12 @@ class NotificationDebugView extends GetView<NotificationController> {
             ElevatedButton(
               onPressed: () {
                 LocalNotificationService.showNotification(
-                  title: "Test Lalapan",
-                  body: "Custom sound aktif 🌶️",
+                  title: 'Test Lalapan',
+                  body: 'Custom sound aktif 🌶️',
                   payload: '{"type":"promo"}',
                 );
               },
-              child: const Text("Test Local Notification"),
+              child: const Text('Test Local Notification'),
             ),
           ],
         ),
