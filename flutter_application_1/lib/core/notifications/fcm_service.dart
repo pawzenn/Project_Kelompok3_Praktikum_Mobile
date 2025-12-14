@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'local_notification_service.dart';
 import '../../data/models/notification_payload.dart';
@@ -8,11 +9,24 @@ class FcmService {
 
   Future<void> init() async {
     // Permission (iOS & Android 13+)
-    await _fcm.requestPermission();
+    await _fcm.requestPermission(alert: true, badge: true, sound: true);
 
-    // Token
-    String? token = await _fcm.getToken();
-    print("FCM Token: $token");
+    // iOS: jangan panggil getToken kalau APNS token belum ada
+    if (Platform.isIOS) {
+      final apns = await _fcm.getAPNSToken();
+      if (apns == null) {
+        print(
+          'APNS token belum ada (simulator sering begini). Skip getToken dulu.',
+        );
+      } else {
+        final token = await _fcm.getToken();
+        print("FCM Token: $token");
+      }
+    } else {
+      // Android aman langsung
+      final token = await _fcm.getToken();
+      print("FCM Token: $token");
+    }
 
     // Foreground
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
