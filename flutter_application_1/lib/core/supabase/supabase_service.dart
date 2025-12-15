@@ -14,16 +14,14 @@ class SupabaseService {
     final anonKey = dotenv.env['SUPABASE_ANON_KEY'];
 
     if (url == null || anonKey == null) {
-      throw Exception(
-        'SUPABASE_URL atau SUPABASE_ANON_KEY belum diset di .env',
-      );
+      throw Exception('SUPABASE_URL atau SUPABASE_ANON_KEY belum diset di .env');
     }
 
     await Supabase.initialize(url: url, anonKey: anonKey);
     client = Supabase.instance.client;
   }
 
-  // ========== AUTH SEDERHANA (opsional) ==========
+  // ========== AUTH ==========
   Future<AuthResponse> signUp(String email, String password) {
     return client.auth.signUp(email: email, password: password);
   }
@@ -39,83 +37,117 @@ class SupabaseService {
   User? get currentUser => client.auth.currentUser;
 
   // ========== CART ==========
-
   Future<void> upsertCartItem({
     required String userId,
     required String productId,
     required int quantity,
   }) async {
-    await client.from('cart_items').upsert({
-      'user_id': userId,
-      'product_id': productId,
-      'quantity': quantity,
-    });
+    try {
+      await client.from('cart_items').upsert({
+        'user_id': userId,
+        'product_id': productId,
+        'quantity': quantity,
+      });
+    } on PostgrestException catch (e) {
+      throw Exception("${e.code ?? ''} ${e.message} ${e.details ?? ''}".trim());
+    }
   }
 
   Future<List<Map<String, dynamic>>> getCartItems(String userId) async {
-    final result = await client
-        .from('cart_items')
-        .select()
-        .eq('user_id', userId);
-
-    return List<Map<String, dynamic>>.from(result);
+    try {
+      final result =
+          await client.from('cart_items').select().eq('user_id', userId);
+      return List<Map<String, dynamic>>.from(result);
+    } on PostgrestException catch (e) {
+      throw Exception("${e.code ?? ''} ${e.message} ${e.details ?? ''}".trim());
+    }
   }
 
   Future<void> deleteCartItem({
     required String userId,
     required String productId,
   }) async {
-    await client
-        .from('cart_items')
-        .delete()
-        .eq('user_id', userId)
-        .eq('product_id', productId);
+    try {
+      await client
+          .from('cart_items')
+          .delete()
+          .eq('user_id', userId)
+          .eq('product_id', productId);
+    } on PostgrestException catch (e) {
+      throw Exception("${e.code ?? ''} ${e.message} ${e.details ?? ''}".trim());
+    }
   }
 
   Future<void> clearCart(String userId) async {
-    await client.from('cart_items').delete().eq('user_id', userId);
+    try {
+      await client.from('cart_items').delete().eq('user_id', userId);
+    } on PostgrestException catch (e) {
+      throw Exception("${e.code ?? ''} ${e.message} ${e.details ?? ''}".trim());
+    }
   }
 
   // ========== ORDER ==========
-
+  // FIX UTAMA: kolom total di schema kamu adalah "total" (bukan total_amount)
   Future<String> createOrder({
     required String userId,
     required double total,
   }) async {
-    final result = await client
-        .from('orders')
-        .insert({'user_id': userId, 'total_amount': total})
-        .select('id')
-        .single();
+    try {
+      final result = await client
+          .from('orders')
+          .insert({
+            'user_id': userId,
+            'total': total, // <-- WAJIB sesuai schema kamu
+          })
+          .select('id')
+          .single();
 
-    return result['id'] as String;
+      return result['id'] as String;
+    } on PostgrestException catch (e) {
+      throw Exception("${e.code ?? ''} ${e.message} ${e.details ?? ''}".trim());
+    } catch (e) {
+      throw Exception(e.toString());
+    }
   }
 
   Future<List<Map<String, dynamic>>> getOrders(String userId) async {
-    final result = await client
-        .from('orders')
-        .select()
-        .eq('user_id', userId)
-        .order('created_at', ascending: false);
+    try {
+      final result = await client
+          .from('orders')
+          .select()
+          .eq('user_id', userId)
+          .order('created_at', ascending: false);
 
-    return List<Map<String, dynamic>>.from(result);
+      return List<Map<String, dynamic>>.from(result);
+    } on PostgrestException catch (e) {
+      throw Exception("${e.code ?? ''} ${e.message} ${e.details ?? ''}".trim());
+    }
   }
 
+  // Schema kamu: order_items.price = total per item (qty * harga)
   Future<void> insertOrderItems({
     required String orderId,
     required List<Map<String, dynamic>> items,
   }) async {
-    final payload = items
-        .map(
-          (item) => {
-            'order_id': orderId,
-            'product_id': item['product_id'],
-            'quantity': item['quantity'],
-            'price': item['price'],
-          },
-        )
-        .toList();
+    final payload = items.map((item) {
+      final qty = (item['quantity'] as num).toInt();
+      final unitPrice = (item['price'] as num).toDouble();
+      final totalPerItem = qty * unitPrice;
 
-    await client.from('order_items').insert(payload);
+      return {
+        'order_id': orderId,
+        'product_id': item['product_id'],
+        'quantity': qty,
+        'price': totalPerItem, // <-- sesuai schema kamu
+      };
+    }).toList();
+
+    try {
+      await client.from('order_items').insert(payload);
+    } on PostgrestException catch (e) {
+      throw Exception("${e.code ?? ''} ${e.message} ${e.details ?? ''}".trim());
+    } catch (e) {
+      throw Exception(e.toString());
+    }
   }
 }
