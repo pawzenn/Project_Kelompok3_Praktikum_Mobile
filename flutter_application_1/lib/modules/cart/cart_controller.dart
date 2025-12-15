@@ -6,17 +6,16 @@ import '../../data/models/product.dart';
 class CartController extends GetxController {
   final supabase = SupabaseService.instance;
 
-  // ==========================
   // CART ITEMS
-  // ==========================
   var items = <CartLine>[].obs;
 
-  // ==========================
   // ORDER HISTORY
-  // ==========================
   var orderHistory = <Map<String, dynamic>>[].obs;
   var isLoadingHistory = false.obs;
   var historyError = ''.obs;
+
+  // CHECKOUT LOADING
+  final isCheckingOut = false.obs;
 
   @override
   void onInit() {
@@ -24,9 +23,7 @@ class CartController extends GetxController {
     loadCartFromSupabase();
   }
 
-  // ======================================================
-  // LOAD CART DARI SUPABASE (JOIN KE TABLE PRODUCTS)
-  // ======================================================
+  // LOAD CART (JOIN PRODUCTS)
   Future<void> loadCartFromSupabase() async {
     final user = supabase.currentUser;
     if (user == null) return;
@@ -52,30 +49,28 @@ class CartController extends GetxController {
     }).toList();
   }
 
-  // ======================================================
-  // LOAD ORDER HISTORY DARI SUPABASE
-  // ======================================================
+  // LOAD ORDER HISTORY
   Future<void> loadOrderHistory() async {
     try {
       isLoadingHistory.value = true;
       historyError.value = '';
 
       final user = supabase.currentUser;
-      if (user == null) return;
+      if (user == null) {
+        historyError.value = 'Silakan login dulu.';
+        return;
+      }
 
       final data = await supabase.getOrders(user.id);
-
       orderHistory.value = data;
     } catch (e) {
-      historyError.value = 'Gagal memuat riwayat.';
+      historyError.value = e.toString().replaceAll('Exception: ', '');
     } finally {
       isLoadingHistory.value = false;
     }
   }
 
-  // ======================================================
-  // ADD PRODUCT (LOCAL + SUPABASE)
-  // ======================================================
+  // ADD PRODUCT
   Future<void> addProduct(Product product) async {
     final user = supabase.currentUser;
     if (user == null) return;
@@ -101,15 +96,12 @@ class CartController extends GetxController {
     items.refresh();
   }
 
-  // ======================================================
   // REMOVE ONE
-  // ======================================================
   Future<void> removeOne(Product product) async {
     final user = supabase.currentUser;
     if (user == null) return;
 
     final index = items.indexWhere((e) => e.product.id == product.id);
-
     if (index == -1) return;
 
     if (items[index].quantity > 1) {
@@ -127,41 +119,48 @@ class CartController extends GetxController {
     items.refresh();
   }
 
-  // ======================================================
   // TOTAL
-  // ======================================================
   int get totalQuantity => items.fold(0, (sum, item) => sum + item.quantity);
 
   double get cartTotal =>
       items.fold(0, (sum, item) => sum + (item.product.price * item.quantity));
 
-  // ======================================================
   // CHECKOUT
-  // ======================================================
   Future<void> checkout() async {
+    if (isCheckingOut.value) return;
+
     final user = supabase.currentUser;
-    if (user == null) return;
+    if (user == null) {
+      throw Exception("Silakan login dulu.");
+    }
 
-    if (items.isEmpty) return;
+    if (items.isEmpty) {
+      throw Exception("Keranjang masih kosong.");
+    }
 
-    final orderId = await supabase.createOrder(
-      userId: user.id,
-      total: cartTotal,
-    );
+    try {
+      isCheckingOut.value = true;
 
-    await supabase.insertOrderItems(
-      orderId: orderId,
-      items: items.map((e) {
-        return {
-          'product_id': e.product.id,
-          'quantity': e.quantity,
-          'price': e.product.price,
-        };
-      }).toList(),
-    );
+      final orderId = await supabase.createOrder(
+        userId: user.id,
+        total: cartTotal,
+      );
 
-    await supabase.clearCart(user.id);
+      await supabase.insertOrderItems(
+        orderId: orderId,
+        items: items.map((e) {
+          return {
+            'product_id': e.product.id,
+            'quantity': e.quantity,
+            'price': e.product.price, // harga satuan (service akan hitung total item)
+          };
+        }).toList(),
+      );
 
-    items.clear();
+      await supabase.clearCart(user.id);
+      items.clear();
+    } finally {
+      isCheckingOut.value = false;
+    }
   }
 }

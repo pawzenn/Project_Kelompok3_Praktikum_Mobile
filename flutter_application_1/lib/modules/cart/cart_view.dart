@@ -20,10 +20,6 @@ class CartView extends StatelessWidget {
           ),
         ],
       ),
-
-      // ============================
-      // ISI HALAMAN
-      // ============================
       body: Obx(() {
         if (controller.items.isEmpty) {
           return const Center(
@@ -36,9 +32,6 @@ class CartView extends StatelessWidget {
 
         return Column(
           children: [
-            // ============================================
-            // LIST PRODUK DALAM KERANJANG
-            // ============================================
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.all(12),
@@ -50,14 +43,14 @@ class CartView extends StatelessWidget {
                     margin: const EdgeInsets.only(bottom: 12),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.surfaceVariant.withOpacity(0.5),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .surfaceVariant
+                          .withOpacity(0.5),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Row(
                       children: [
-                        // GAMBAR PRODUK
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12),
                           child: item.product.imageUrl != null
@@ -69,10 +62,7 @@ class CartView extends StatelessWidget {
                                 )
                               : const Icon(Icons.fastfood, size: 48),
                         ),
-
                         const SizedBox(width: 12),
-
-                        // NAMA + HARGA
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,20 +75,14 @@ class CartView extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              Text(
-                                "Rp ${item.product.price.toStringAsFixed(0)}",
-                              ),
+                              Text("Rp ${item.product.price.toStringAsFixed(0)}"),
                             ],
                           ),
                         ),
-
-                        // TOMBOL MIN
                         IconButton(
                           icon: const Icon(Icons.remove),
                           onPressed: () => controller.removeOne(item.product),
                         ),
-
-                        // QTY
                         Text(
                           item.quantity.toString(),
                           style: const TextStyle(
@@ -106,8 +90,6 @@ class CartView extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-
-                        // TOMBOL PLUS
                         IconButton(
                           icon: const Icon(Icons.add),
                           onPressed: () => controller.addProduct(item.product),
@@ -118,10 +100,6 @@ class CartView extends StatelessWidget {
                 },
               ),
             ),
-
-            // ============================================
-            // TOTAL & CHECKOUT BUTTON
-            // ============================================
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
@@ -131,7 +109,6 @@ class CartView extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // TOTAL
                   Obx(() {
                     return Text(
                       "Total: Rp ${controller.cartTotal.toStringAsFixed(0)}",
@@ -141,21 +118,29 @@ class CartView extends StatelessWidget {
                       ),
                     );
                   }),
-
-                  // BUTTON CHECKOUT
                   ElevatedButton(
-                    onPressed: () async {
-                      await controller.checkout();
-                      Get.snackbar(
-                        "Sukses",
-                        "Pesanan berhasil dibuat.",
-                        snackPosition: SnackPosition.TOP,
-                      );
-                    },
+                    onPressed: controller.isCheckingOut.value
+                        ? null
+                        : () async {
+                            try {
+                              await controller.checkout();
+                              Get.snackbar(
+                                "Sukses",
+                                "Pesanan berhasil dibuat.",
+                                snackPosition: SnackPosition.TOP,
+                              );
+                            } catch (e) {
+                              Get.snackbar(
+                                "Gagal",
+                                e.toString().replaceAll('Exception: ', ''),
+                                snackPosition: SnackPosition.TOP,
+                                duration: const Duration(seconds: 6),
+                              );
+                            }
+                          },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(
-                        context,
-                      ).colorScheme.primaryContainer,
+                      backgroundColor:
+                          Theme.of(context).colorScheme.primaryContainer,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,
                         vertical: 12,
@@ -164,7 +149,11 @@ class CartView extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    child: const Text("Checkout"),
+                    child: Obx(() {
+                      return Text(
+                        controller.isCheckingOut.value ? "Memproses..." : "Checkout",
+                      );
+                    }),
                   ),
                 ],
               ),
